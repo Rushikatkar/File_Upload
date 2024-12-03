@@ -1,0 +1,243 @@
+{
+	"info": {
+		"_postman_id": "f450c50c-4baf-40e4-af35-d269659ccfa6",
+		"name": "File Upload",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29041227"
+	},
+	"item": [
+		{
+			"name": "Valid file and format",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response Content-Type is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response structure contains required fields\", function () {\r",
+							"    const responseData = pm.response.json();\r",
+							"    pm.expect(responseData).to.be.an(\"object\");\r",
+							"    pm.expect(responseData.status).to.be.a(\"string\");\r",
+							"    pm.expect(responseData.message).to.be.a(\"string\");\r",
+							"    pm.expect(responseData.data).to.be.an(\"object\");\r",
+							"});\r",
+							"pm.test(\"Validate file metadata in response\", function () {\r",
+							"    const data = pm.response.json().data;\r",
+							"\r",
+							"    // Validate fileName\r",
+							"    pm.expect(data.fileName).to.be.a(\"string\").and.to.have.lengthOf.at.least(1);\r",
+							"\r",
+							"    // Validate fileType\r",
+							"    pm.expect(data.fileType).to.be.oneOf([\"image/jpeg\", \"image/png\", \"application/pdf\"]);\r",
+							"\r",
+							"    // Validate fileSize (convert \"112 KB\" to bytes for comparison)\r",
+							"    const fileSizeInBytes = parseInt(data.fileSize.split(\" \")[0]) * 1024; // Assuming size is always in KB\r",
+							"    pm.expect(fileSizeInBytes).to.be.a(\"number\").and.to.be.below(5242880); // 5MB in bytes\r",
+							"\r",
+							"    // Validate filePath\r",
+							"    pm.expect(data.filePath).to.be.a(\"string\").and.to.include(\"/Uploads/\");\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response message indicates successful upload\", function () {\r",
+							"    const responseData = pm.response.json();\r",
+							"    pm.expect(responseData.message).to.include(\"File uploaded successfully\");\r",
+							"});\r",
+							"pm.test(\"Uploaded file name is unique\", function () {\r",
+							"    const data = pm.response.json().data;\r",
+							"    pm.expect(data.fileName).to.not.include(\"../\");\r",
+							"    pm.expect(data.fileName).to.not.include(\"..\\\\\");\r",
+							"});\r",
+							"const data = pm.response.json().data;\r",
+							"pm.globals.set(\"uploadedFilePath\", data.filePath);\r",
+							"pm.globals.set(\"uploadedFileName\", data.fileName);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/OmSai/Downloads/cshaarp.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:61123/api/files/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "61123",
+					"path": [
+						"api",
+						"files",
+						"upload"
+					]
+				},
+				"description": "This endpoint allows you to upload a file via a POST request to the specified URL. The request should be of form-data type with a key \"file\" to upload the file.\n\n### Request Body\n\n- `file` (file): The file to be uploaded.\n    \n\n### Response\n\nUpon a successful execution, the endpoint returns a JSON response with a status code of 200 and the following fields:\n\n- `status`: The status of the response.\n    \n- `message`: A message related to the response status.\n    \n- `data`: An object containing details of the uploaded file, including:\n    \n    - `fileName`: The name of the uploaded file.\n        \n    - `filePath`: The path where the file is stored.\n        \n    - `fileSize`: The size of the uploaded file.\n        \n    - `fileType`: The type of the uploaded file."
+			},
+			"response": []
+		},
+		{
+			"name": "Invalid file format / No input file",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test that the response status is 400 Bad Request\r",
+							"pm.test(\"Response status code is 400 for invalid file format\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"\r",
+							"// Test that the Content-Type of the response is application/json\r",
+							"pm.test(\"Response Content-Type is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							"\r",
+							"\r",
+							"\r",
+							"// Test that no file metadata is returned for invalid file uploads\r",
+							"pm.test(\"No file metadata returned for invalid file format\", function () {\r",
+							"    const responseData = pm.response.json();\r",
+							"\r",
+							"    pm.expect(responseData.data).to.be.undefined;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:61123/api/files/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "61123",
+					"path": [
+						"api",
+						"files",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Large File upload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test that the response status is 413 for files exceeding the size limit\r",
+							"pm.test(\"Response status code is 413 for file larger than 5MB\", function () {\r",
+							"    pm.response.to.have.status(413);\r",
+							"});\r",
+							"\r",
+							"// Test that the Content-Type of the response is application/json\r",
+							"pm.test(\"Response Content-Type is application/json\", function () {\r",
+							"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+							"});\r",
+							"\r",
+							"\r",
+							"\r",
+							"// Test that no file metadata is returned for a large file upload\r",
+							"pm.test(\"No file metadata returned for file larger than 5MB\", function () {\r",
+							"    const responseData = pm.response.json();\r",
+							"\r",
+							"    pm.expect(responseData.data).to.be.undefined;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/OmSai/Downloads/7mb.pdf"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:61123/api/files/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "61123",
+					"path": [
+						"api",
+						"files",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
